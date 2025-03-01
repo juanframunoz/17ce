@@ -13,12 +13,17 @@ POSTGRES_USER="postgres"
 # Actualizar el sistema
 sudo apt update && sudo apt upgrade -y
 
+# Agregar el repositorio de Deadsnakes para instalar Python 3.10
+sudo apt install -y software-properties-common
+sudo add-apt-repository -y ppa:deadsnakes/ppa
+sudo apt update
+
 # Instalar dependencias necesarias
-sudo apt install -y python3.10 python3.10-venv python3.10-dev \
+sudo apt install -y python3.10 python3.10-venv python3.10-dev python3.10-distutils python3.10-lib2to3 \
     git libpq-dev libxslt-dev libzip-dev libldap2-dev libsasl2-dev \
     libjpeg-dev zlib1g-dev libtiff5-dev libopenjp2-7-dev libssl-dev \
     libffi-dev libxml2-dev libxslt1-dev libjpeg-dev libpq-dev \
-    build-essential wget nodejs npm curl libev-dev python3.10-distutils python3.10-lib2to3
+    build-essential wget nodejs npm curl libev-dev
 
 # Instalar PostgreSQL
 sudo apt install -y postgresql postgresql-contrib
