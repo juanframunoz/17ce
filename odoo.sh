@@ -44,6 +44,9 @@ sudo git clone --depth 1 --branch 17.0 https://github.com/odoo/odoo.git $ODOO_HO
 sudo -u $ODOO_USER python3.10 -m venv $ODOO_HOME/venv
 sudo -u $ODOO_USER $ODOO_HOME/venv/bin/pip install --upgrade pip setuptools wheel cython
 
+# Instalar dependencias adicionales necesarias para Odoo
+sudo -u $ODOO_USER $ODOO_HOME/venv/bin/pip install psycopg2-binary werkzeug
+
 # Crear archivo de configuración de Odoo
 cat <<EOF | sudo tee $ODOO_CONFIG
 [options]
