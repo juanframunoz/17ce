@@ -23,7 +23,8 @@ sudo apt install -y python3.10 python3.10-venv python3.10-dev python3.10-distuti
     git libpq-dev libxslt-dev libzip-dev libldap2-dev libsasl2-dev \
     libjpeg-dev zlib1g-dev libtiff5-dev libopenjp2-7-dev libssl-dev \
     libffi-dev libxml2-dev libxslt1-dev libjpeg-dev libpq-dev \
-    build-essential wget nodejs npm curl libev-dev
+    build-essential wget nodejs npm curl libev-dev \
+    python3-pip python3-reportlab
 
 # Instalar PostgreSQL
 sudo apt install -y postgresql postgresql-contrib
@@ -45,7 +46,7 @@ sudo -u $ODOO_USER python3.10 -m venv $ODOO_HOME/venv
 sudo -u $ODOO_USER $ODOO_HOME/venv/bin/pip install --upgrade pip setuptools wheel cython
 
 # Instalar dependencias adicionales necesarias para Odoo
-sudo -u $ODOO_USER $ODOO_HOME/venv/bin/pip install psycopg2-binary werkzeug
+sudo -u $ODOO_USER $ODOO_HOME/venv/bin/pip install psycopg2-binary werkzeug MarkupSafe>=2.1.1 reportlab rjsmin
 
 # Crear archivo de configuración de Odoo
 cat <<EOF | sudo tee $ODOO_CONFIG
@@ -69,53 +70,29 @@ sudo mkdir -p $ODOO_HOME/custom_addons
 sudo chown -R $ODOO_USER:$ODOO_USER $ODOO_HOME/custom_addons
 sudo chmod -R 755 $ODOO_HOME/custom_addons
 
-# Instalar dependencias de Odoo con versión corregida de gevent
-cat <<EOF > $ODOO_HOME/odoo/requirements.txt
-Babel==2.9.1 ; python_version < '3.11'
-Babel==2.10.3 ; python_version >= '3.11'
-chardet==4.0.0 ; python_version < '3.11'
-chardet==5.2.0 ; python_version >= '3.11'
-cryptography==3.4.8; python_version < '3.12'
-cryptography==42.0.8 ; python_version >= '3.12'
-decorator==4.4.2  ; python_version < '3.11'
-decorator==5.1.1  ; python_version >= '3.11'
-docutils==0.17 ; python_version < '3.11'
-docutils==0.20.1 ; python_version >= '3.11'
-ebaysdk==2.1.5
-freezegun==1.1.0 ; python_version < '3.11'
-freezegun==1.2.1 ; python_version >= '3.11'
-geoip2==2.9.0
-gevent==21.12.0 ; sys_platform != 'win32' and python_version == '3.10'
-greenlet==1.1.2 ; sys_platform != 'win32' and python_version == '3.10'
-idna==2.10 ; python_version < '3.12'
-idna==3.6 ; python_version >= '3.12'
-Jinja2==3.0.3 ; python_version <= '3.10'
-Jinja2==3.1.2 ; python_version > '3.10'
-libsass==0.20.1 ; python_version < '3.11'
-libsass==0.22.0 ; python_version >= '3.11'
-lxml==4.8.0 ; python_version <= '3.10'
-lxml==4.9.3 ; python_version > '3.10' and python_version < '3.12'
-MarkupSafe==2.0.1 ; python_version <= '3.10'
-MarkupSafe==2.1.2 ; python_version > '3.10' and python_version < '3.12'
-num2words==0.5.10 ; python_version < '3.12'
-ofxparse==0.21
-passlib==1.7.4
-Pillow==9.0.1 ; python_version <= '3.10'
-polib==1.1.1
-psutil==5.9.0 ; python_version <= '3.10'
-pydot==1.4.2
-pyopenssl==21.0.0 ; python_version < '3.12'
-PyPDF2==1.26.0 ; python_version <= '3.10'
-pyserial==3.5
-python-dateutil==2.8.1 ; python_version < '3.11'
+# Crear el servicio systemd para Odoo
+cat <<EOF | sudo tee /etc/systemd/system/odoo.service
+[Unit]
+Description=Odoo
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=$ODOO_USER
+Group=$ODOO_USER
+ExecStart=$ODOO_HOME/venv/bin/python3 $ODOO_HOME/odoo/odoo-bin -c $ODOO_CONFIG
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
 EOF
 
-# Instalar dependencias
-sudo -u $ODOO_USER $ODOO_HOME/venv/bin/pip install --no-cache-dir -r $ODOO_HOME/odoo/requirements.txt
-
-# Habilitar y arrancar Odoo
+# Recargar systemd y habilitar el servicio
 sudo systemctl daemon-reload
 sudo systemctl enable odoo
 sudo systemctl start odoo
+
+# Verificar estado del servicio
+sudo systemctl status odoo
 
 echo "Odoo 17 ha sido instalado correctamente con los módulos de OCA y la localización española. Ejecuta el siguiente script para configurar Nginx."
