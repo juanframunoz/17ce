@@ -66,15 +66,6 @@ sudo mkdir -p $ODOO_HOME/custom_addons
 sudo chown -R $ODOO_USER:$ODOO_USER $ODOO_HOME/custom_addons
 sudo chmod -R 755 $ODOO_HOME/custom_addons
 
-# Descargar módulos de OCA y localización española
-sudo -u $ODOO_USER mkdir -p $ODOO_HOME/custom_addons
-cd $ODOO_HOME/custom_addons
-sudo -u $ODOO_USER git clone --depth 1 --branch 17.0 https://github.com/OCA/l10n-spain.git
-sudo -u $ODOO_USER git clone --depth 1 --branch 17.0 https://github.com/OCA/web.git
-sudo -u $ODOO_USER git clone --depth 1 --branch 17.0 https://github.com/OCA/server-tools.git
-sudo -u $ODOO_USER git clone --depth 1 --branch 17.0 https://github.com/OCA/sale-workflow.git
-sudo -u $ODOO_USER git clone --depth 1 --branch 17.0 https://github.com/OCA/account-financial-tools.git
-
 # Instalar dependencias de Odoo con versión corregida de gevent
 cat <<EOF > $ODOO_HOME/odoo/requirements.txt
 Babel==2.9.1 ; python_version < '3.11'
@@ -93,36 +84,35 @@ freezegun==1.2.1 ; python_version >= '3.11'
 geoip2==2.9.0
 gevent==21.12.0 ; sys_platform != 'win32' and python_version == '3.10'
 greenlet==1.1.2 ; sys_platform != 'win32' and python_version == '3.10'
-...
+idna==2.10 ; python_version < '3.12'
+idna==3.6 ; python_version >= '3.12'
+Jinja2==3.0.3 ; python_version <= '3.10'
+Jinja2==3.1.2 ; python_version > '3.10'
+libsass==0.20.1 ; python_version < '3.11'
+libsass==0.22.0 ; python_version >= '3.11'
+lxml==4.8.0 ; python_version <= '3.10'
+lxml==4.9.3 ; python_version > '3.10' and python_version < '3.12'
+MarkupSafe==2.0.1 ; python_version <= '3.10'
+MarkupSafe==2.1.2 ; python_version > '3.10' and python_version < '3.12'
+num2words==0.5.10 ; python_version < '3.12'
+ofxparse==0.21
+passlib==1.7.4
+Pillow==9.0.1 ; python_version <= '3.10'
+polib==1.1.1
+psutil==5.9.0 ; python_version <= '3.10'
+pydot==1.4.2
+pyopenssl==21.0.0 ; python_version < '3.12'
+PyPDF2==1.26.0 ; python_version <= '3.10'
+pyserial==3.5
+python-dateutil==2.8.1 ; python_version < '3.11'
 EOF
 
 # Instalar dependencias
 sudo -u $ODOO_USER $ODOO_HOME/venv/bin/pip install --no-cache-dir -r $ODOO_HOME/odoo/requirements.txt
 
-# Crear servicio systemd para Odoo
-cat <<EOF | sudo tee /etc/systemd/system/odoo.service
-[Unit]
-Description=Odoo
-After=network.target postgresql.service
-
-[Service]
-Type=simple
-User=$ODOO_USER
-ExecStart=$ODOO_HOME/venv/bin/python3 $ODOO_HOME/odoo/odoo-bin -c $ODOO_CONFIG
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
 # Habilitar y arrancar Odoo
 sudo systemctl daemon-reload
 sudo systemctl enable odoo
 sudo systemctl start odoo
-
-# Configurar firewall
-sudo ufw allow 8069
-sudo ufw allow OpenSSH
-sudo ufw enable
 
 echo "Odoo 17 ha sido instalado correctamente con los módulos de OCA y la localización española. Ejecuta el siguiente script para configurar Nginx."
