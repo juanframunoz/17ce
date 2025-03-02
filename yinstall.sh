@@ -49,7 +49,11 @@ sudo -u postgres psql -c "SELECT 1 FROM pg_database WHERE datname = 'odoo'" | gr
 
 # Crear usuario Odoo en el sistema si no existe
 echo "📌 Verificando usuario $odoo_user..."
-id -u $odoo_user &>/dev/null || sudo adduser --system --home=$odoo_home --group $odoo_user
+if ! id -u $odoo_user >/dev/null 2>&1; then
+    sudo adduser --system --home=$odoo_home --group $odoo_user
+else
+    echo "📌 El usuario $odoo_user ya existe, saltando creación..."
+fi
 
 # Descargar Odoo
 echo "📌 Descargando Odoo 17..."
@@ -58,17 +62,17 @@ sudo chown -R $odoo_user:$odoo_user $odoo_home_ext
 
 # Crear entorno virtual e instalar dependencias de Odoo
 echo "📌 Configurando entorno virtual de Odoo..."
-python3.10 -m venv $odoo_home_ext/venv
+if [ ! -d "$odoo_home_ext/venv" ]; then
+    python3.10 -m venv $odoo_home_ext/venv
+fi
 source $odoo_home_ext/venv/bin/activate
-pip install --upgrade pip
-pip install wheel
+pip install --upgrade pip wheel
 
 # Modificar requirements.txt para evitar errores de instalación
 echo "📌 Modificando requirements.txt..."
-sed -i '/gevent/d' $odoo_home_ext/requirements.txt
-sed -i '/psycopg2/d' $odoo_home_ext/requirements.txt
-sed -i '/greenlet/d' $odoo_home_ext/requirements.txt
-sed -i '/python-ldap/d' $odoo_home_ext/requirements.txt
+for pkg in "gevent" "psycopg2" "greenlet" "python-ldap"; do
+    sed -i "/$pkg/d" $odoo_home_ext/requirements.txt
+done
 
 # Instalar dependencias desde requirements.txt
 echo "📌 Instalando dependencias de Odoo..."
@@ -106,6 +110,10 @@ EOL
 sudo chmod 644 /etc/systemd/system/odoo.service
 sudo systemctl daemon-reload
 sudo systemctl enable odoo
+
+# Verificar e instalar módulos base
+echo "📌 Verificando e instalando módulos base..."
+sudo -u odoo $odoo_home_ext/venv/bin/python3 $odoo_home_ext/odoo-bin -c $odoo_config --update=base --stop-after-init
 
 # Reiniciar Odoo
 echo "📌 Reiniciando Odoo..."
