@@ -110,6 +110,7 @@ pyopenssl==21.0.0 ; python_version < '3.12'
 PyPDF2==1.26.0 ; python_version <= '3.10'
 pyserial==3.5
 python-dateutil==2.8.1 ; python_version < '3.11'
+psycopg2-binary==2.9.9
 EOF
 
 # Instalar dependencias
