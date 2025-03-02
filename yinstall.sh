@@ -55,6 +55,23 @@ else
     echo "📌 El usuario $odoo_user ya existe, saltando creación..."
 fi
 
+# Crear archivo de configuración si no existe
+echo "📌 Creando archivo de configuración $odoo_config..."
+sudo tee $odoo_config > /dev/null <<EOL
+[options]
+admin_passwd = admin
+db_host = False
+db_port = False
+db_user = odoo
+db_password = odoo
+addons_path = $odoo_home_ext/addons,$oca_dir
+logfile = $odoo_log
+xmlrpc_interface = 0.0.0.0
+EOL
+
+sudo chown $odoo_user:$odoo_user $odoo_config
+sudo chmod 640 $odoo_config
+
 # Descargar Odoo
 echo "📌 Descargando Odoo 17..."
 sudo git clone --depth 1 --branch $odoo_version $odoo_repo $odoo_home_ext
