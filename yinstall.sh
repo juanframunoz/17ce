@@ -103,6 +103,11 @@ EOL
 sudo chown $odoo_user:$odoo_user $odoo_config
 sudo chmod 640 $odoo_config
 
+# Inicializar la base de datos si no está configurada
+echo "📌 Verificando inicialización de la base de datos..."
+sudo -u postgres psql -d odoo -c "SELECT 1 FROM ir_module_module WHERE name='base';" | grep -q 1 || \
+    sudo -u odoo $odoo_home_ext/venv/bin/python3 $odoo_home_ext/odoo-bin -c $odoo_config -i base --without-demo=all --stop-after-init
+
 # Crear servicio systemd para Odoo
 echo "📌 Configurando servicio systemd para Odoo..."
 sudo tee /etc/systemd/system/$otip.service > /dev/null <<EOL
