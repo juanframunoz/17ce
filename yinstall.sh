@@ -86,6 +86,33 @@ sudo mkdir -p /var/log/$otip/
 sudo touch $odoo_log
 sudo chown -R $odoo_user:$odoo_user /var/log/$otip/
 
+# Clonar módulos OCA
+echo "📌 Descargando módulos de la OCA..."
+sudo mkdir -p $oca_dir
+sudo chown -R $odoo_user:$odoo_user $oca_dir
+cd $oca_dir
+
+declare -a oca_repos=(
+    "account-financial-tools"
+    "bank-payment"
+    "account-closing"
+    "account-invoicing"
+    "server-tools"
+    "web"
+    "sale-workflow"
+    "stock-logistics-workflow"
+    "hr"
+    "l10n-spain"
+    "contract"
+)
+
+for repo in "${oca_repos[@]}"; do
+    echo "📌 Clonando repositorio OCA: $repo..."
+    sudo git clone --depth 1 --branch 17.0 https://github.com/OCA/$repo.git
+    sudo chown -R $odoo_user:$odoo_user $repo
+    echo "✅ $repo instalado."
+done
+
 # Crear archivo de configuración si no existe
 echo "📌 Creando archivo de configuración $odoo_config..."
 sudo tee $odoo_config > /dev/null <<EOL
@@ -108,29 +135,9 @@ echo "📌 Verificando inicialización de la base de datos..."
 sudo -u postgres psql -d odoo -c "SELECT 1 FROM information_schema.tables WHERE table_name = 'ir_module_module';" | grep -q 1 || \
     sudo -u odoo $odoo_home_ext/venv/bin/python3 $odoo_home_ext/odoo-bin -c $odoo_config -d odoo -i base --without-demo=all --stop-after-init
 
-# Crear servicio systemd para Odoo
-echo "📌 Configurando servicio systemd para Odoo..."
-sudo tee /etc/systemd/system/$otip.service > /dev/null <<EOL
-[Unit]
-Description=Odoo 17
-After=network.target postgresql.service
-
-[Service]
-Type=simple
-User=$odoo_user
-ExecStart=$odoo_home_ext/venv/bin/python3 $odoo_home_ext/odoo-bin -c $odoo_config
-
-[Install]
-WantedBy=multi-user.target
-EOL
-
-sudo chmod 644 /etc/systemd/system/$otip.service
-
-# Recargar systemd y habilitar servicio
-echo "📌 Habilitando servicio Odoo..."
-sudo systemctl daemon-reload
-sudo systemctl enable $otip
-sudo systemctl start $otip
+# Reiniciar Odoo
+echo "📌 Reiniciando Odoo..."
+sudo systemctl restart odoo
 
 # Verificar que Odoo se está ejecutando correctamente
 if systemctl is-active --quiet $otip; then
