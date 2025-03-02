@@ -115,10 +115,33 @@ EOF
 # Instalar dependencias
 sudo -u $ODOO_USER $ODOO_HOME/venv/bin/pip install --no-cache-dir -r $ODOO_HOME/odoo/requirements.txt
 
+# Crear servicio systemd para Odoo
+cat <<EOF | sudo tee /etc/systemd/system/odoo.service
+[Unit]
+Description=Odoo
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=$ODOO_USER
+ExecStart=$ODOO_HOME/venv/bin/python3 $ODOO_HOME/odoo/odoo-bin -c $ODOO_CONFIG
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+
 # Habilitar y arrancar Odoo
 sudo systemctl daemon-reload
 sudo systemctl enable odoo
 sudo systemctl start odoo
+
+
+# Configurar firewall
+sudo ufw allow 8069
+sudo ufw allow OpenSSH
+sudo ufw enable
 
 # Verificar estado del servicio
 sudo systemctl status odoo
