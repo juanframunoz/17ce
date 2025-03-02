@@ -46,6 +46,10 @@ sudo -u $ODOO_USER $ODOO_HOME/venv/bin/pip install --upgrade pip setuptools whee
 
 # Asegurar versión correcta de Werkzeug
 sudo -u $ODOO_USER $ODOO_HOME/venv/bin/pip install --upgrade werkzeug==2.2.3
+# Asegurar la instalación de rjsmin dentro del entorno virtual de Odoo
+sudo -u $ODOO_USER $ODOO_HOME/venv/bin/pip install --no-cache-dir --force-reinstall rjsmin
+# Asegurar la instalación de reportlab dentro del entorno virtual de Odoo
+sudo -u $ODOO_USER $ODOO_HOME/venv/bin/pip install --no-cache-dir --force-reinstall reportlab
 
 # Crear archivo de configuración de Odoo
 cat <<EOF | sudo tee $ODOO_CONFIG
